@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DexGpt</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #ffffff;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+    }
+    header {
+      background: #000000;
+      color: #39e704;
+      padding: 1rem;
+      font-size: 1.2rem;
+      font-weight: bold;
+    }
+    .chat-container {
+      flex: 1;
+      padding: 1rem;
+      overflow-y: auto;
+    }
+    .input-container {
+      display: flex;
+      padding: 1rem;
+      background: #fff;
+      border-top: 1px solid #ccc;
+    }
+    .input-container input[type="text"] {
+      flex: 1;
+      padding: 0.75rem;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+    .input-container button {
+      margin-left: 10px;
+      padding: 0.75rem 1rem;
+      background: #00eeff;
+      color: #ff0505;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    .input-container input[type="file"] {
+      margin-left: 10px;
+      padding: 0.75rem;
+    }
+    .message {
+      margin-bottom: 1rem;
+    }
+    .user {
+      text-align: right;
+      color: #4709f1;
+    }
+    .bot {
+      text-align: left;
+      color: #ff0022;
+    }
+    .image-message {
+      text-align: center;
+      margin-top: 10px;
+    }
+    .image-message img {
+      max-width: 100%;
+      height: auto;
+      border-radius: 8px;
+    }
+  </style>
+</head>
+<body>
+  <header>DexGpt</header>
+  <div class="chat-container" id="chat"></div>
+  <div class="input-container">
+    <input type="text" id="userInput" placeholder="Tanya DexGpt...">
+    <!-- Tombol input gambar -->
+    <input type="file" id="imageInput" accept="image/*">
+    <button onclick="sendMessage()">Kirim</button>
+  </div>
+
+  <script>
+    async function sendMessage() {
+      const input = document.getElementById('userInput');
+      const message = input.value.trim();
+      const imageInput = document.getElementById('imageInput');
+      const imageFile = imageInput.files[0];
+
+      if (!message && !imageFile) return; // Jangan kirim pesan kosong atau file kosong
+
+      addMessage(message, 'user');
+      input.value = '';
+      imageInput.value = ''; // Clear image input setelah pengiriman
+
+      // Persiapkan pesan dan gambar jika ada
+      let formData = new FormData();
+      formData.append('message', message);
+      if (imageFile) {
+        formData.append('image', imageFile);
+      }
+
+      const response = await fetch('http://localhost:3000/api/chat', {
+        method: 'POST',
+        body: formData
+      });
+
+      const data = await response.json();
+      addMessage(data.reply, 'bot');
+    }
+
+    function addMessage(text, sender) {
+      const chat = document.getElementById('chat');
+      const div = document.createElement('div');
+      div.className = `message ${sender}`;
+      div.textContent = text;
+      chat.appendChild(div);
+      chat.scrollTop = chat.scrollHeight;
+    }
+
+    // Fungsi untuk pratinjau gambar sebelum dikirim
+    function previewImage(event) {
+      const file = event.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function (e) {
+          const chat = document.getElementById('chat');
+          const div = document.createElement('div');
+          div.className = 'image-message';
+          div.innerHTML = `<img src="${e.target.result}" alt="Image Preview">`;
+          chat.appendChild(div);
+        };
+        reader.readAsDataURL(file);
+      }
+    }
+  </script>
+</body>
+</html>
